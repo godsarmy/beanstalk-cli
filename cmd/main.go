@@ -2,6 +2,7 @@ package main
 
 import (
     "context"
+    "encoding/json"
     "fmt"
     "net/url"
     "os"
@@ -11,6 +12,7 @@ import (
 
     "github.com/alecthomas/kingpin/v2"
     "github.com/beanstalkd/go-beanstalk"
+    "github.com/gosuri/uitable"
 )
 
 var version = "dev"
@@ -81,6 +83,25 @@ func getConnect(address string) (*beanstalk.Conn, error) {
     return nil, fmt.Errorf("Unknown scheme: %s", u.Scheme)
 }
 
+func printUI(result map[string]string) {
+    table := uitable.New()
+    table.MaxColWidth = 80
+    table.Wrap = true 
+
+    for key, value := range result {
+        table.AddRow(fmt.Sprintf("%s:", key), value)
+    }
+    fmt.Println(table)
+}
+
+func printJSON(result map[string]string) {
+    jsonString, err := json.Marshal(result)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+    }
+    fmt.Println(string(jsonString))
+}
+
 func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[string]string {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     if tube != "" {
@@ -89,7 +110,7 @@ func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[st
     }
     id, body, err := conn.Reserve(timeout)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
     return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
@@ -99,7 +120,7 @@ func peekFunc(ctx context.Context, id uint64) map[string]string {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     body, err := conn.Peek(id)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
     return map[string]string{"body": string(body)}
@@ -114,7 +135,7 @@ func putFunc(ctx context.Context, body string, tube string, priority uint32, del
     id, err := conn.Put([]byte(body), priority, delay, ttr)
 
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
     return map[string]string{"id": strconv.FormatUint(id, 10)}
@@ -124,7 +145,7 @@ func releaseFunc(ctx context.Context, id uint64, priority uint32, delay time.Dur
     conn := ctx.Value("conn").(*beanstalk.Conn)
     err := conn.Release(id, priority, delay)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 }
@@ -133,7 +154,7 @@ func buryFunc(ctx context.Context, id uint64, priority uint32) {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     err := conn.Bury(id, priority)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 }
@@ -142,7 +163,7 @@ func deleteFunc(ctx context.Context, id uint64) {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     err := conn.Delete(id)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 }
@@ -151,7 +172,7 @@ func touchFunc(ctx context.Context, id uint64) {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     err := conn.Touch(id)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
 }
@@ -160,7 +181,7 @@ func statsFunc(ctx context.Context) map[string]string {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     stats, err := conn.Stats()
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
     return stats
@@ -170,7 +191,7 @@ func statsjFunc(ctx context.Context, id uint64) map[string]string {
     conn := ctx.Value("conn").(*beanstalk.Conn)
     stats, err := conn.StatsJob(id)
     if err != nil {
-        fmt.Println(err)
+        fmt.Fprintln(os.Stderr, err)
         os.Exit(1)
     }
     return stats
@@ -212,7 +233,13 @@ func main() {
            rc = statsjFunc(ctx, *statsjJob)
        }
 
-    if rc != nil {
-        fmt.Println(rc)
+    if rc == nil {
+        return
+    }
+
+    if *format == "json" {
+        printJSON(rc)
+    } else {
+        printUI(rc)
     }
 }
