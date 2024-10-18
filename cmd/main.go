@@ -214,7 +214,7 @@ func main() {
     var rc map[string]string
     switch cmd {
        case "peek":
-           peekFunc(ctx, *peekJob)
+           rc = peekFunc(ctx, *peekJob)
        case "reserve":
            rc = reserveFunc(ctx, *reserveTimeout, *reserveTube)
        case "put":
