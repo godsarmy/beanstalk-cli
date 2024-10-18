@@ -4,17 +4,25 @@ import (
     "context"
     "fmt"
     "net/url"
+    "os"
+    "strconv"
+    "strings"
+    "time"
 
     "github.com/alecthomas/kingpin/v2"
     "github.com/beanstalkd/go-beanstalk"
 )
 
+var version = "dev"
+
 var (
     debug = kingpin.Flag("debug", "Enable debug mode.").Short('d').Bool()
-    address = kingpin.Flag("address", "Connect address.").Short('c').Default(":8080").String()
+    address = kingpin.Flag("address", "Connect address.").Short('c').Default("tcp://127.0.0.1:11300").String()
+    format = kingpin.Flag("format", "Output format").Default("text").Enum("json", "text")
 
     bury = kingpin.Command("bury", "Bury a job.")
     buryJob = bury.Arg("job", "Job ID").Required().Uint64()
+    buryPriority = bury.Flag("priority", "Job priority").Short('p').Default("0").Uint32()
 
     delete = kingpin.Command("delete", "Delete a job.")
     deleteJob = delete.Arg("job", "Job ID").Required().Uint64()
@@ -33,23 +41,26 @@ var (
     put = kingpin.Command("put", "Put a job.")
     putBody = put.Arg("body", "Job body").Required().String()
     putPriority = put.Flag("priority", "Job priority").Short('p').Uint32()
-    putTube = kingpin.Flag("tube", "Enable debug mode.").Short('t').String()
-    putDelay = put.Flag("delay", "Job delay").Short('d').Duration()
+    putTube = put.Flag("tube", "Enable debug mode.").Short('b').String()
+    putDelay = put.Flag("delay", "Job delay").Short('l').Duration()
     putTtr = put.Flag("ttr", "Job ttr").Short('r').Duration()
 
     release = kingpin.Command("release", "Release a job.")
-    releaseJob = release.Arg("job", "Job ID").Required().Int()
+    releaseJob = release.Arg("job", "Job ID").Required().Uint64()
+    releasePriority = release.Flag("priority", "Job priority").Short('p').Default("0").Uint32()
+    releaseDelay = release.Flag("delay", "Job delay").Short('l').Default("0").Duration()
 
     reserve = kingpin.Command("reserve", "Reserve a job.")
-    reserveJob = reserve.Arg("job", "Job ID").Int()
+    reserveTube = reserve.Flag("tube", "Tube name").Short('b').String()
+    reserveTimeout = reserve.Flag("timeout", "timeout").Short('t').Default("0").Duration()
 
     stats = kingpin.Command("stats", "Get stats.")
 
     statsj= kingpin.Command("stats-job", "Get job stats.")
-    statsjJob = statsj.Arg("job", "Job ID").Required().Int()
+    statsjJob = statsj.Arg("job", "Job ID").Required().Uint64()
 
     touch = kingpin.Command("touch", "Touch a job.")
-    touchJob = touch.Arg("job", "Job ID").Required().Int()
+    touchJob = touch.Arg("job", "Job ID").Required().Uint64()
 
 )
 
@@ -60,86 +71,148 @@ func getConnect(address string) (*beanstalk.Conn, error) {
     }
 
     if u.Scheme == "file" {
-        return beanstalk.Dial("udp", u.Path)
+        return beanstalk.Dial("unix", u.Path)
     }
 
-    if u.Scheme == "tcp" || u.Scheme == "" {
+    if u.Scheme == "tcp" {
         return beanstalk.Dial("tcp", u.Host)
     }
 
     return nil, fmt.Errorf("Unknown scheme: %s", u.Scheme)
 }
 
-func reserveFunc(ctx context.Context, id uint64) {
-    conn = ctx.Value("conn").(*beanstalk.Conn)
-    body, err := conn.Reserve(*reserveJob)
-    if err != nil {
-        println(err)
-        return
+func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[string]string {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    if tube != "" {
+        tubes := strings.Split(tube, ",")
+        conn.TubeSet = *beanstalk.NewTubeSet(conn, tubes...)
     }
-    println(body)
+    id, body, err := conn.Reserve(timeout)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
 }
 
-func peekFunc(ctx context.Context, id uint64) {
-    conn = ctx.Value("conn").(*beanstalk.Conn)
-    body, err := conn.Peek(*peekJob)
+func peekFunc(ctx context.Context, id uint64) map[string]string {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    body, err := conn.Peek(id)
     if err != nil {
-        println(err)
-        return
+        fmt.Println(err)
+        os.Exit(1)
     }
-    println(body)
+    return map[string]string{"body": string(body)}
 }
 
-func putFunc(ctx context.Context, body string, tube string, priority uint32, delay time.Duration, ttr time.Duration) {
-    conn = ctx.Value("conn").(*beanstalk.Conn)
-    id, err := conn.Put(tube, []byte(body), priority, delay, ttr)
-    if err != nil {
-        println(err)
-        return
+func putFunc(ctx context.Context, body string, tube string, priority uint32, delay time.Duration, ttr time.Duration) map[string]string {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+
+    if tube != "" {
+        conn.Tube = *beanstalk.NewTube(conn, tube)
     }
-    println(id)
+    id, err := conn.Put([]byte(body), priority, delay, ttr)
+
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    return map[string]string{"id": strconv.FormatUint(id, 10)}
 }
 
-func releaseFunc(ctx context.Context, id uint64) {
-    conn = ctx.Value("conn").(*beanstalk.Conn)
-    err := conn.Release(id)
+func releaseFunc(ctx context.Context, id uint64, priority uint32, delay time.Duration) {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    err := conn.Release(id, priority, delay)
     if err != nil {
-        println(err)
-        return
+        fmt.Println(err)
+        os.Exit(1)
     }
+}
+
+func buryFunc(ctx context.Context, id uint64, priority uint32) {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    err := conn.Bury(id, priority)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+}
+
+func deleteFunc(ctx context.Context, id uint64) {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    err := conn.Delete(id)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+}
+
+func touchFunc(ctx context.Context, id uint64) {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    err := conn.Touch(id)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+}
+
+func statsFunc(ctx context.Context) map[string]string {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    stats, err := conn.Stats()
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    return stats
+}
+
+func statsjFunc(ctx context.Context, id uint64) map[string]string {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    stats, err := conn.StatsJob(id)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    return stats
 }
 
 func main() {
     ctx := context.Background()
 
-    switch kingpin.Parse() {
-        case "debug":
-            ctx = context.WithValue(ctx, "debug", true)
-        case "address":
-            c, err := getConnect(*address)
-            if err != nil {
-                println(err)
-                return
-            }
-            defer c.Close()
-            ctx := context.WithValue(ctx, "conn", c)
+    kingpin.Version(version)
+    cmd := kingpin.Parse() 
+    ctx = context.WithValue(ctx, "debug", *debug)
+    c, err := getConnect(*address)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(255)
+    }
+    defer c.Close()
+    ctx = context.WithValue(ctx, "conn", c)
+
+    var rc map[string]string
+    switch cmd {
        case "peek":
            peekFunc(ctx, *peekJob)
        case "reserve":
-           reserveFunc(ctx, *reserveJob)
+           rc = reserveFunc(ctx, *reserveTimeout, *reserveTube)
        case "put":
-           putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
+           rc = putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
        case "release":
-           releaseFunc(ctx, *releaseJob)
+           releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
        case "bury":
-           buryFunc(ctx, *buryJob)
+           buryFunc(ctx, *buryJob, *buryPriority)
        case "delete":
            deleteFunc(ctx, *deleteJob)
        case "touch":
            touchFunc(ctx, *touchJob)
        case "stats":
-           statsFunc(ctx, *statsjJob)
+           rc = statsFunc(ctx)
        case "stats-job":
-           statsjFunc(ctx, *statsjJob)
+           rc = statsjFunc(ctx, *statsjJob)
+       }
+
+    if rc != nil {
+        fmt.Println(rc)
     }
 }
