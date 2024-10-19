@@ -153,17 +153,18 @@ func putFunc(
 func releaseFunc(
 	ctx context.Context,
 	id uint64,
-	priority uinte2,
+	priority uint32,
 	delay time.Duration,
 ) map[string]string {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	// job must be reserved first before release
+	body, err := conn.ReserveJob(id)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	err := conn.Release(id, priority, delay)
+	err = conn.Release(id, priority, delay)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
