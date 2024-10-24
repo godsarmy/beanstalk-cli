@@ -64,6 +64,9 @@ var (
 	statsj    = kingpin.Command("stats-job", "Get job stats.")
 	statsjJob = statsj.Arg("job", "Job ID").Required().Uint64()
 
+	statst     = kingpin.Command("stats-tube", "Get tube stats.")
+	statstTube = statst.Arg("tube", "Tube name").Required().String()
+
 	touch    = kingpin.Command("touch", "Touch a job.")
 	touchJob = touch.Arg("job", "Job ID").Required().Uint64()
 )
@@ -227,6 +230,16 @@ func statsjFunc(ctx context.Context, id uint64) map[string]string {
 	return stats
 }
 
+func statstFunc(ctx context.Context, tube string) map[string]string {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	stats, err := conn.StatsTube(tube)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return stats
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -261,6 +274,8 @@ func main() {
 		resp = statsFunc(ctx)
 	case "stats-job":
 		resp = statsjFunc(ctx, *statsjJob)
+	case "stats-tube":
+		resp = statstFunc(ctx, *statstTube)
 	}
 
 	if resp == nil {
