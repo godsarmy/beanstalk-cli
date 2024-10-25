@@ -37,6 +37,10 @@ var (
 
 	listt = kingpin.Command("list-tubes", "List Tubes.")
 
+	pause      = kingpin.Command("pause", "Pause new reservation for a Tube.")
+	pauseTube  = pause.Arg("tube", "Tube name").String()
+	pauseDelay = pause.Flag("delay", "Job delay").Required().Short('l').Duration()
+
 	peek    = kingpin.Command("peek", "Peek a job.")
 	peekJob = peek.Arg("job", "Job ID").Required().Uint64()
 
@@ -232,7 +236,7 @@ func statsjFunc(ctx context.Context, id uint64) map[string]string {
 
 func statstFunc(ctx context.Context, tube string) map[string]string {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
-    connTube := *beanstalk.NewTube(conn, tube)
+	connTube := *beanstalk.NewTube(conn, tube)
 	stats, err := connTube.Stats()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -242,13 +246,24 @@ func statstFunc(ctx context.Context, tube string) map[string]string {
 }
 
 func kickFunc(ctx context.Context, id uint64) {
-    conn := ctx.Value("conn").(*beanstalk.Conn)
-    err := conn.KickJob(id)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, err)
-        os.Exit(1)
-    }
-    return
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	err := conn.KickJob(id)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return
+}
+
+func pauseFunc(ctx context.Context, tube string, delay time.Duration) {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	connTube := *beanstalk.NewTube(conn, tube)
+	err := connTube.Pause(delay)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return
 }
 
 func main() {
@@ -271,10 +286,12 @@ func main() {
 		resp = buryFunc(ctx, *buryJob, *buryPriority)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
-    case "kick":
-        kickFunc(ctx, *kickJob)
+	case "kick":
+		kickFunc(ctx, *kickJob)
 	case "peek":
 		resp = peekFunc(ctx, *peekJob)
+	case "pause":
+		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "put":
 		resp = putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
 	case "release":
