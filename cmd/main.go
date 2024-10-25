@@ -44,8 +44,14 @@ var (
 	peek    = kingpin.Command("peek", "Peek a job.")
 	peekJob = peek.Arg("job", "Job ID").Required().Uint64()
 
-	peakReady     = kingpin.Command("peek-ready", "Peek Ready Jobs.")
-	peakReadyTube = peakReady.Arg("tube", "Tube name").String()
+	peekReady     = kingpin.Command("peek-ready", "Peek Ready Jobs.")
+	peekReadyTube = peekReady.Arg("tube", "Tube name").String()
+
+	peekBuried     = kingpin.Command("peek-buried", "Peek Buried Jobs.")
+	peekBuriedTube = peekBuried.Arg("tube", "Tube name").String()
+
+	peekDelayed     = kingpin.Command("peek-deplayed", "Peek Delayed Jobs.")
+	peekDelayedTube = peekDelayed.Arg("tube", "Tube name").String()
 
 	put         = kingpin.Command("put", "Put a job.")
 	putBody     = put.Arg("body", "Job body").Required().String()
@@ -266,6 +272,48 @@ func pauseFunc(ctx context.Context, tube string, delay time.Duration) {
 	return
 }
 
+func peekReadyFunc(ctx context.Context, tube string) map[string]string {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	if tube != "" {
+		conn.Tube = *beanstalk.NewTube(conn, tube)
+	}
+
+	id, body, err := conn.PeekReady()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+}
+
+func peekDelayedFunc(ctx context.Context, tube string) map[string]string {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	if tube != "" {
+		conn.Tube = *beanstalk.NewTube(conn, tube)
+	}
+
+	id, body, err := conn.PeekDelayed()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+}
+
+func peekBuriedFunc(ctx context.Context, tube string) map[string]string {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	if tube != "" {
+		conn.Tube = *beanstalk.NewTube(conn, tube)
+	}
+
+	id, body, err := conn.PeekBuried()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -290,6 +338,12 @@ func main() {
 		kickFunc(ctx, *kickJob)
 	case "peek":
 		resp = peekFunc(ctx, *peekJob)
+	case "peekBuried":
+		resp = peekBuriedFunc(ctx, *peekBuriedTube)
+	case "peekDelayed":
+		resp = peekDelayedFunc(ctx, *peekDelayedTube)
+	case "peekReady":
+		resp = peekReadyFunc(ctx, *peekReadyTube)
 	case "pause":
 		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "put":
