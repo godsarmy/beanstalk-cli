@@ -23,7 +23,7 @@ var (
 		Short('c').
 		Default("tcp://127.0.0.1:11300").
 		String()
-	format = kingpin.Flag("format", "Output format").Default("text").Enum("json", "text")
+	format = kingpin.Flag("format", "Output format").Short('f').Default("text").Enum("json", "text")
 
 	bury         = kingpin.Command("bury", "Bury a job.")
 	buryJob      = bury.Arg("job", "Job ID").Required().Uint64()
@@ -81,7 +81,7 @@ func getConnect(address string) (*beanstalk.Conn, error) {
 		return nil, err
 	}
 
-	if u.Scheme == "file" {
+	if u.Scheme == "unix" {
 		return beanstalk.Dial("unix", u.Path)
 	}
 
