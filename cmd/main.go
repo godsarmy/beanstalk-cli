@@ -232,12 +232,23 @@ func statsjFunc(ctx context.Context, id uint64) map[string]string {
 
 func statstFunc(ctx context.Context, tube string) map[string]string {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
-	stats, err := conn.StatsTube(tube)
+    connTube := *beanstalk.NewTube(conn, tube)
+	stats, err := connTube.Stats()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	return stats
+}
+
+func kickFunc(ctx context.Context, id uint64) {
+    conn := ctx.Value("conn").(*beanstalk.Conn)
+    err := conn.KickJob(id)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+        os.Exit(1)
+    }
+    return
 }
 
 func main() {
@@ -256,26 +267,28 @@ func main() {
 
 	var resp map[string]string
 	switch cmd {
-	case "peek":
-		resp = peekFunc(ctx, *peekJob)
-	case "reserve":
-		resp = reserveFunc(ctx, *reserveTimeout, *reserveTube)
-	case "put":
-		resp = putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
-	case "release":
-		resp = releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
 	case "bury":
 		resp = buryFunc(ctx, *buryJob, *buryPriority)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
-	case "touch":
-		touchFunc(ctx, *touchJob)
+    case "kick":
+        kickFunc(ctx, *kickJob)
+	case "peek":
+		resp = peekFunc(ctx, *peekJob)
+	case "put":
+		resp = putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
+	case "release":
+		resp = releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
+	case "reserve":
+		resp = reserveFunc(ctx, *reserveTimeout, *reserveTube)
 	case "stats":
 		resp = statsFunc(ctx)
 	case "stats-job":
 		resp = statsjFunc(ctx, *statsjJob)
 	case "stats-tube":
 		resp = statstFunc(ctx, *statstTube)
+	case "touch":
+		touchFunc(ctx, *touchJob)
 	}
 
 	if resp == nil {
