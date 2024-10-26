@@ -4,10 +4,12 @@ A full functional beanstalkd CLI for [beanstalkd](https://github.com/beanstalkd/
 
 ## Features
 
-Full featured CLI to implement each command of [beanstalkd protocol](https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt).
-Output can be formatted to [JSON](https://json.org/).
+ * Full featured CLI to implement each command of [beanstalkd protocol](https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt).
+ * Connect to beanstalkd server in tcp mode or unix socket mode.
+ * Output can be formatted to [JSON](https://json.org/).
 
 ## Download
+You can download by
 
 ## Development
 
