@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -98,7 +97,7 @@ func getConnect(address string) (*beanstalk.Conn, error) {
 	return nil, fmt.Errorf("Unknown scheme: %s", u.Scheme)
 }
 
-func printUI(result map[string]string) {
+func printUI[T any](result map[string]T) {
 	table := uitable.New()
 	table.MaxColWidth = 80
 	table.Wrap = true
@@ -109,7 +108,7 @@ func printUI(result map[string]string) {
 	fmt.Println(table)
 }
 
-func printJSON(result map[string]string) {
+func printJSON[T any](result map[string]T) {
 	jsonString, err := json.Marshal(result)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -117,7 +116,7 @@ func printJSON(result map[string]string) {
 	fmt.Println(string(jsonString))
 }
 
-func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[string]string {
+func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	if tube != "" {
 		tubes := strings.Split(tube, ",")
@@ -128,17 +127,17 @@ func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[st
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
 }
 
-func peekFunc(ctx context.Context, id uint64) map[string]string {
+func peekFunc(ctx context.Context, id uint64) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	body, err := conn.Peek(id)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"body": string(body)}
+	return map[string]interface{}{"body": string(body)}
 }
 
 func putFunc(
@@ -148,7 +147,7 @@ func putFunc(
 	priority uint32,
 	delay time.Duration,
 	ttr time.Duration,
-) map[string]string {
+) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 
 	if tube != "" {
@@ -160,7 +159,7 @@ func putFunc(
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10)}
+	return map[string]interface{}{"id": id}
 }
 
 func releaseFunc(
@@ -168,7 +167,7 @@ func releaseFunc(
 	id uint64,
 	priority uint32,
 	delay time.Duration,
-) map[string]string {
+) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	// job must be reserved first before release
 	body, err := conn.ReserveJob(id)
@@ -182,10 +181,10 @@ func releaseFunc(
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
 }
 
-func buryFunc(ctx context.Context, id uint64, priority uint32) map[string]string {
+func buryFunc(ctx context.Context, id uint64, priority uint32) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	// job must be reserved first before bury
 	body, err := conn.ReserveJob(id)
@@ -199,7 +198,7 @@ func buryFunc(ctx context.Context, id uint64, priority uint32) map[string]string
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
 }
 
 func deleteFunc(ctx context.Context, id uint64) {
@@ -272,7 +271,7 @@ func pauseFunc(ctx context.Context, tube string, delay time.Duration) {
 	return
 }
 
-func peekReadyFunc(ctx context.Context, tube string) map[string]string {
+func peekReadyFunc(ctx context.Context, tube string) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	if tube != "" {
 		conn.Tube = *beanstalk.NewTube(conn, tube)
@@ -283,10 +282,10 @@ func peekReadyFunc(ctx context.Context, tube string) map[string]string {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
 }
 
-func peekDelayedFunc(ctx context.Context, tube string) map[string]string {
+func peekDelayedFunc(ctx context.Context, tube string) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	if tube != "" {
 		conn.Tube = *beanstalk.NewTube(conn, tube)
@@ -297,10 +296,10 @@ func peekDelayedFunc(ctx context.Context, tube string) map[string]string {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
 }
 
-func peekBuriedFunc(ctx context.Context, tube string) map[string]string {
+func peekBuriedFunc(ctx context.Context, tube string) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	if tube != "" {
 		conn.Tube = *beanstalk.NewTube(conn, tube)
@@ -311,7 +310,19 @@ func peekBuriedFunc(ctx context.Context, tube string) map[string]string {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	return map[string]string{"id": strconv.FormatUint(id, 10), "body": string(body)}
+	return map[string]interface{}{"id": id, "body": string(body)}
+}
+
+func print[T any](format string, data map[string]T) {
+	if data == nil {
+		return
+	}
+
+	if format == "json" {
+		printJSON(data)
+	} else {
+		printUI(data)
+	}
 }
 
 func main() {
@@ -328,47 +339,47 @@ func main() {
 	defer c.Close()
 	ctx = context.WithValue(ctx, "conn", c)
 
-	var resp map[string]string
 	switch cmd {
 	case "bury":
-		resp = buryFunc(ctx, *buryJob, *buryPriority)
+        resp := buryFunc(ctx, *buryJob, *buryPriority)
+        print(*format, resp)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
 	case "kick":
 		kickFunc(ctx, *kickJob)
 	case "peek":
-		resp = peekFunc(ctx, *peekJob)
+        resp := peekFunc(ctx, *peekJob)
+        print(*format, resp)
 	case "peekBuried":
-		resp = peekBuriedFunc(ctx, *peekBuriedTube)
+        resp := peekBuriedFunc(ctx, *peekBuriedTube)
+        print(*format, resp)
 	case "peekDelayed":
-		resp = peekDelayedFunc(ctx, *peekDelayedTube)
+        resp := peekDelayedFunc(ctx, *peekDelayedTube)
+        print(*format, resp)
 	case "peekReady":
-		resp = peekReadyFunc(ctx, *peekReadyTube)
+        resp := peekReadyFunc(ctx, *peekReadyTube)
+        print(*format, resp)
 	case "pause":
 		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "put":
-		resp = putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
+        resp := putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
+        print(*format, resp)
 	case "release":
-		resp = releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
+        resp := releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
+        print(*format, resp)
 	case "reserve":
-		resp = reserveFunc(ctx, *reserveTimeout, *reserveTube)
+        resp := reserveFunc(ctx, *reserveTimeout, *reserveTube)
+        print(*format, resp)
 	case "stats":
-		resp = statsFunc(ctx)
+        resp := statsFunc(ctx)
+        print(*format, resp)
 	case "stats-job":
-		resp = statsjFunc(ctx, *statsjJob)
+        resp := statsjFunc(ctx, *statsjJob)
+        print(*format, resp)
 	case "stats-tube":
-		resp = statstFunc(ctx, *statstTube)
+        resp := statstFunc(ctx, *statstTube)
+        print(*format, resp)
 	case "touch":
 		touchFunc(ctx, *touchJob)
-	}
-
-	if resp == nil {
-		return
-	}
-
-	if *format == "json" {
-		printJSON(resp)
-	} else {
-		printUI(resp)
 	}
 }
