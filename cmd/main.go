@@ -341,44 +341,44 @@ func main() {
 
 	switch cmd {
 	case "bury":
-        resp := buryFunc(ctx, *buryJob, *buryPriority)
-        print(*format, resp)
+		resp := buryFunc(ctx, *buryJob, *buryPriority)
+		print(*format, resp)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
 	case "kick":
 		kickFunc(ctx, *kickJob)
 	case "peek":
-        resp := peekFunc(ctx, *peekJob)
-        print(*format, resp)
+		resp := peekFunc(ctx, *peekJob)
+		print(*format, resp)
 	case "peekBuried":
-        resp := peekBuriedFunc(ctx, *peekBuriedTube)
-        print(*format, resp)
+		resp := peekBuriedFunc(ctx, *peekBuriedTube)
+		print(*format, resp)
 	case "peekDelayed":
-        resp := peekDelayedFunc(ctx, *peekDelayedTube)
-        print(*format, resp)
+		resp := peekDelayedFunc(ctx, *peekDelayedTube)
+		print(*format, resp)
 	case "peekReady":
-        resp := peekReadyFunc(ctx, *peekReadyTube)
-        print(*format, resp)
+		resp := peekReadyFunc(ctx, *peekReadyTube)
+		print(*format, resp)
 	case "pause":
 		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "put":
-        resp := putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
-        print(*format, resp)
+		resp := putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
+		print(*format, resp)
 	case "release":
-        resp := releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
-        print(*format, resp)
+		resp := releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
+		print(*format, resp)
 	case "reserve":
-        resp := reserveFunc(ctx, *reserveTimeout, *reserveTube)
-        print(*format, resp)
+		resp := reserveFunc(ctx, *reserveTimeout, *reserveTube)
+		print(*format, resp)
 	case "stats":
-        resp := statsFunc(ctx)
-        print(*format, resp)
+		resp := statsFunc(ctx)
+		print(*format, resp)
 	case "stats-job":
-        resp := statsjFunc(ctx, *statsjJob)
-        print(*format, resp)
+		resp := statsjFunc(ctx, *statsjJob)
+		print(*format, resp)
 	case "stats-tube":
-        resp := statstFunc(ctx, *statstTube)
-        print(*format, resp)
+		resp := statstFunc(ctx, *statstTube)
+		print(*format, resp)
 	case "touch":
 		touchFunc(ctx, *touchJob)
 	}
