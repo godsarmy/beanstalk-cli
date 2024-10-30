@@ -31,6 +31,11 @@ body:	foobar
 ```
 $ beanstalk-cli delete -a tcp://127.0.0.1:11300 2
 ```
+ * Connect to a server listening on unix socket
+```
+$ beanstalkd -l unix:///tmp/beanstalkd.sock &
+$ beanstalk-cli stats -a unix:///tmp/beanstalkd.sock
+```
 
 ## Development
 
