@@ -19,7 +19,7 @@ var version = "dev"
 var (
 	debug   = kingpin.Flag("debug", "Enable debug mode.").Short('d').Bool()
 	address = kingpin.Flag("address", "Connect address.").
-		Short('c').
+		Short('a').
 		Default("tcp://127.0.0.1:11300").
 		String()
 	format = kingpin.Flag("format", "Output format").Short('f').Default("text").Enum("json", "text")
