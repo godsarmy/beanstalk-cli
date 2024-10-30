@@ -15,7 +15,7 @@ A full functional beanstalkd CLI for [beanstalkd](https://github.com/beanstalkd/
 $ beanstalk put -a tcp://127.0.0.1:11300 foobar
 id:	2
 ```
- * Reerve a job
+ * Reserve a job
 ```
 $ beanstalk reserve -a tcp://127.0.0.1:11300
 id:  	1
