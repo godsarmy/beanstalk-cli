@@ -65,8 +65,9 @@ var (
 	reserve        = kingpin.Command("reserve", "Reserve a job.")
 	reserveTube    = reserve.Flag("tube", "Tube name").Short('b').String()
 	reserveTimeout = reserve.Flag("timeout", "timeout").Short('t').Default("0").Duration()
+	reserveJob     = reserve.Arg("job", "Job ID").Uint64()
 
-	stats = kingpin.Command("stats", "Get stats.")
+	stats = kingpin.Command("stats", "Get server stats.")
 
 	statsj    = kingpin.Command("stats-job", "Get job stats.")
 	statsjJob = statsj.Arg("job", "Job ID").Required().Uint64()
@@ -169,7 +170,12 @@ func main() {
 		resp := releaseFunc(ctx, *releaseJob, *releasePriority, *releaseDelay)
 		print(*format, resp)
 	case "reserve":
-		resp := reserveFunc(ctx, *reserveTimeout, *reserveTube)
+		var resp map[string]interface{}
+		if *reserveJob != 0 {
+			resp = reserveJobFunc(ctx, *reserveJob)
+		} else {
+			resp = reserveFunc(ctx, *reserveTimeout, *reserveTube)
+		}
 		print(*format, resp)
 	case "stats":
 		resp := statsFunc(ctx)

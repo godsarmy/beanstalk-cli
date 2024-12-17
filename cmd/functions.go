@@ -10,6 +10,16 @@ import (
 	"github.com/beanstalkd/go-beanstalk"
 )
 
+func reserveJobFunc(ctx context.Context, id uint64) map[string]interface{} {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	body, err := conn.ReserveJob(id)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return map[string]interface{}{"body": string(body)}
+}
+
 func reserveFunc(ctx context.Context, timeout time.Duration, tube string) map[string]interface{} {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	if tube != "" {

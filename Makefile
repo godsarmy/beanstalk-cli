@@ -28,7 +28,7 @@ GO_BUILD := $(GO) build $(EXTRA_FLAGS) -ldflags "$(LDFLAGS_COMMON)"
 
 .PHONY: all
 beanstalk-cli-$(TARGET): cmd/main.go cmd/functions.go
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) -o $@ $?
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) -o $@ $^
 
 format:
 	gofmt -w */*.go
