@@ -216,3 +216,13 @@ func peekBuriedFunc(ctx context.Context, tube string) map[string]interface{} {
 	}
 	return map[string]interface{}{"id": id, "body": string(body)}
 }
+
+func listTubesFunc(ctx context.Context) map[string]interface{} {
+	conn := ctx.Value("conn").(*beanstalk.Conn)
+	tubes, err := conn.ListTubes()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return map[string]interface{}{"tubes": tubes}
+}

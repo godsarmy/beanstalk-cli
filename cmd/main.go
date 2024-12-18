@@ -147,6 +147,9 @@ func main() {
 		print(*format, resp)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
+	case "list-tubes":
+		resp := listTubesFunc(ctx)
+		print(*format, resp)
 	case "kick":
 		kickFunc(ctx, *kickJob)
 	case "peek":
