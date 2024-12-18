@@ -147,11 +147,13 @@ func main() {
 		print(*format, resp)
 	case "delete":
 		deleteFunc(ctx, *deleteJob)
+	case "kick":
+		kickFunc(ctx, *kickJob)
 	case "list-tubes":
 		resp := listTubesFunc(ctx)
 		print(*format, resp)
-	case "kick":
-		kickFunc(ctx, *kickJob)
+	case "pause":
+		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "peek":
 		resp := peekFunc(ctx, *peekJob)
 		print(*format, resp)
@@ -164,8 +166,6 @@ func main() {
 	case "peekReady":
 		resp := peekReadyFunc(ctx, *peekReadyTube)
 		print(*format, resp)
-	case "pause":
-		pauseFunc(ctx, *pauseTube, *pauseDelay)
 	case "put":
 		resp := putFunc(ctx, *putBody, *putTube, *putPriority, *putDelay, *putTtr)
 		print(*format, resp)
