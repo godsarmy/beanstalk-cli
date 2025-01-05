@@ -15,67 +15,68 @@ import (
 var version = "dev"
 
 var (
-	debug   = kingpin.Flag("debug", "Enable debug mode.").Short('d').Bool()
-	address = kingpin.Flag("address", "Connect address. schema: tcp | unix").
+	app     = kingpin.New("beanstalk-cli", "A beanstalkd client CLI application.")
+	debug   = app.Flag("debug", "Enable debug mode.").Short('d').Bool()
+	address = app.Flag("address", "Connect address. schema: tcp | unix").
 		Short('a').
 		Default("tcp://127.0.0.1:11300").
 		String()
-	format = kingpin.Flag("format", "Output format").Short('f').Default("text").Enum("json", "text")
+	format = app.Flag("format", "Output format").Short('f').Default("text").Enum("json", "text")
 
-	bury         = kingpin.Command("bury", "Bury a job.")
+	bury         = app.Command("bury", "Bury a job.")
 	buryJob      = bury.Arg("job", "Job ID").Required().Uint64()
 	buryPriority = bury.Flag("priority", "Job priority").Short('p').Default("0").Uint32()
 
-	delete    = kingpin.Command("delete", "Delete a job.")
+	delete    = app.Command("delete", "Delete a job.")
 	deleteJob = delete.Arg("job", "Job ID").Required().Uint64()
 
-	kick    = kingpin.Command("kick", "Kick a job.")
+	kick    = app.Command("kick", "Kick a job.")
 	kickJob = kick.Arg("job", "Job ID").Required().Uint64()
 
-	listt = kingpin.Command("list-tubes", "List Tubes.")
+	listt = app.Command("list-tubes", "List Tubes.")
 
-	pause      = kingpin.Command("pause", "Pause new reservation for a Tube.")
+	pause      = app.Command("pause-tube", "Pause new reservation for a Tube.")
 	pauseTube  = pause.Arg("tube", "Tube name").String()
 	pauseDelay = pause.Flag("delay", "Job delay").Required().Short('l').Duration()
 
-	peek    = kingpin.Command("peek", "Peek a job.")
+	peek    = app.Command("peek", "Peek a job.")
 	peekJob = peek.Arg("job", "Job ID").Required().Uint64()
 
-	peekReady     = kingpin.Command("peek-ready", "Peek Ready Jobs.")
+	peekReady     = app.Command("peek-ready", "Peek Ready Jobs.")
 	peekReadyTube = peekReady.Arg("tube", "Tube name").String()
 
-	peekBuried     = kingpin.Command("peek-buried", "Peek Buried Jobs.")
+	peekBuried     = app.Command("peek-buried", "Peek Buried Jobs.")
 	peekBuriedTube = peekBuried.Arg("tube", "Tube name").String()
 
-	peekDelayed     = kingpin.Command("peek-deplayed", "Peek Delayed Jobs.")
+	peekDelayed     = app.Command("peek-deplayed", "Peek Delayed Jobs.")
 	peekDelayedTube = peekDelayed.Arg("tube", "Tube name").String()
 
-	put         = kingpin.Command("put", "Put a job.")
+	put         = app.Command("put", "Put a job.")
 	putBody     = put.Arg("body", "Job body").Required().String()
 	putPriority = put.Flag("priority", "Job priority").Short('p').Uint32()
 	putTube     = put.Flag("tube", "Enable debug mode.").Short('b').String()
 	putDelay    = put.Flag("delay", "Job delay").Short('l').Duration()
 	putTtr      = put.Flag("ttr", "Job ttr").Short('r').Duration()
 
-	release         = kingpin.Command("release", "Release a job.")
+	release         = app.Command("release", "Release a job.")
 	releaseJob      = release.Arg("job", "Job ID").Required().Uint64()
 	releasePriority = release.Flag("priority", "Job priority").Short('p').Default("0").Uint32()
 	releaseDelay    = release.Flag("delay", "Job delay").Short('l').Default("0").Duration()
 
-	reserve        = kingpin.Command("reserve", "Reserve a job.")
+	reserve        = app.Command("reserve", "Reserve a job.")
 	reserveTube    = reserve.Flag("tube", "Tube name").Short('b').String()
 	reserveTimeout = reserve.Flag("timeout", "timeout").Short('t').Default("0").Duration()
 	reserveJob     = reserve.Arg("job", "Job ID").Uint64()
 
-	stats = kingpin.Command("stats", "Get server stats.")
+	stats = app.Command("stats", "Get server stats.")
 
-	statsj    = kingpin.Command("stats-job", "Get job stats.")
+	statsj    = app.Command("stats-job", "Get job stats.")
 	statsjJob = statsj.Arg("job", "Job ID").Required().Uint64()
 
-	statst     = kingpin.Command("stats-tube", "Get tube stats.")
+	statst     = app.Command("stats-tube", "Get tube stats.")
 	statstTube = statst.Arg("tube", "Tube name").Required().String()
 
-	touch    = kingpin.Command("touch", "Touch a job.")
+	touch    = app.Command("touch", "Touch a job.")
 	touchJob = touch.Arg("job", "Job ID").Required().Uint64()
 )
 
@@ -130,8 +131,8 @@ func print[T any](format string, data map[string]T) {
 func main() {
 	ctx := context.Background()
 
-	kingpin.Version(version)
-	cmd := kingpin.Parse()
+	app.Version(version)
+	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 	ctx = context.WithValue(ctx, "debug", *debug)
 	c, err := getConnect(*address)
 	if err != nil {
@@ -152,8 +153,8 @@ func main() {
 	case "list-tubes":
 		resp := listTubesFunc(ctx)
 		print(*format, resp)
-	case "pause":
-		pauseFunc(ctx, *pauseTube, *pauseDelay)
+	case "pause-tube":
+		pauseTubeFunc(ctx, *pauseTube, *pauseDelay)
 	case "peek":
 		resp := peekFunc(ctx, *peekJob)
 		print(*format, resp)

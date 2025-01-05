@@ -164,7 +164,7 @@ func kickFunc(ctx context.Context, id uint64) {
 	return
 }
 
-func pauseFunc(ctx context.Context, tube string, delay time.Duration) {
+func pauseTubeFunc(ctx context.Context, tube string, delay time.Duration) {
 	conn := ctx.Value("conn").(*beanstalk.Conn)
 	connTube := *beanstalk.NewTube(conn, tube)
 	err := connTube.Pause(delay)
