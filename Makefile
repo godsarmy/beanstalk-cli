@@ -3,10 +3,8 @@ GO ?= go
 ifndef GOOS
   ifeq ($(OS), Windows_NT)
 	GOOS := windows
-	GOEXT := .exe
   else
 	GOOS := $(shell uname -s| tr '[:upper:]' '[:lower:]')
-	GOEXT :=
   endif
 endif
 
@@ -20,6 +18,13 @@ ifndef GOARCH
 	GOARCH := arm64
   endif
 endif
+
+ifeq ($(GOOS), windows)
+	GOEXT := .exe
+else
+	GOEXT :=
+endif
+
 # Set build targets based on OS
 VERSION ?= $(shell cat ./VERSION)
 
