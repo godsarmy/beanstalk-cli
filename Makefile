@@ -1,7 +1,11 @@
 GO ?= go
 
 ifndef GOOS
-  GOOS := $(shell uname -s| tr '[:upper:]' '[:lower:]')
+  ifeq ($(OS), Windows_NT)
+	GOOS := windows
+  else
+	GOOS := $(shell uname -s| tr '[:upper:]' '[:lower:]')
+  endif
 endif
 
 ifndef GOARCH
