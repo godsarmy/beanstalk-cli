@@ -14,7 +14,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu, windows, darwin]
         go: [1.22]
     runs-on: ${{ matrix.os }}
     steps:
@@ -26,11 +26,12 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - name: Build
-      run: make
+      run: |
+        make build OS=${{ matrix.os }} ARCH=amd64
 
     - name: Test
       run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+        if [[ "${{ matrix.os }}" == "windows" ]]; then
           echo "Skip gofmt check on windows"
         else
           gofmt -d */*.go
