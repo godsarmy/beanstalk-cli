@@ -1,20 +1,20 @@
 GO ?= go
 
 ifndef GOOS
-  GOOS := $(shell uname | tr '[:upper:]' '[:lower:]')
+  GOOS := $(shell uname -s| tr '[:upper:]' '[:lower:]')
 endif
 
 ifndef GOARCH
   MACHINE=$(shell uname -m)
   ifeq ($(MACHINE), x86_64)
 	GOARCH := amd64
-    GOEXT :=
+	GOEXT :=
   else ifeq ($(MACHINE), i386)
 	GOARCH := i386
-    GOEXT :=
+	GOEXT :=
   else ifeq ($(MACHINE), arm)
 	GOARCH := arm64
-    GOEXT := .exe
+  	GOEXT := .exe
   endif
 endif
 # Set build targets based on OS
