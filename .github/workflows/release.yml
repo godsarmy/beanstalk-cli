@@ -1,5 +1,8 @@
 name: Build and Release Binaries
 
+permissions:
+  contents: write  # Add write permission to contents for release assets
+
 on:
   release:
     types: [created]
@@ -46,5 +49,5 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: bin/beanstalk-cli.${{ matrix.arch }}.${{ matrix.os }}${{ matrix.extension }}
           asset_name: |
-            beanstalk-cli.${{ matrix.os }}.${{ matrix.arch }}${{ matrix.extension }}
+            beanstalk-cli.${{ matrix.arch }}.${{ matrix.os }}${{ matrix.extension }}
           asset_content_type: application/octet-stream
