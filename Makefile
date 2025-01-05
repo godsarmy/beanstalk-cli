@@ -8,10 +8,13 @@ ifndef GOARCH
   MACHINE=$(shell uname -m)
   ifeq ($(MACHINE), x86_64)
 	GOARCH := amd64
+    GOEXT :=
   else ifeq ($(MACHINE), i386)
 	GOARCH := i386
+    GOEXT :=
   else ifeq ($(MACHINE), arm)
 	GOARCH := arm64
+    GOEXT := .exe
   endif
 endif
 # Set build targets based on OS
@@ -26,9 +29,11 @@ GO_BUILD := $(GO) build $(EXTRA_FLAGS) -ldflags "$(LDFLAGS_COMMON)"
 
 .PHONY: all
 build: beanstalk-cli
+	mkdir -p bin
+	cp -f $< bin/$<.$(GOARCH).$(GOOS)$(GOEXT)
 
 beanstalk-cli: cmd/main.go cmd/functions.go
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) -o $@.$(GOARCH).$(GOOS) $^
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) -o $@ $^
 
 format:
 	gofmt -w */*.go
@@ -36,4 +41,7 @@ format:
 
 .PHONY: all
 clean:
-	rm -rf beanstalk-cli.*
+	rm -rf beanstalk-cli
+
+superclean: clean
+	rm -rf bin/

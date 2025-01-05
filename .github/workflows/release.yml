@@ -1,0 +1,50 @@
+name: Build and Release Binaries
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            extension: ""
+          - os: linux
+            arch: arm64
+            extension: ""
+          - os: darwin
+            arch: amd64
+            extension: ""
+          - os: darwin
+            arch: arm64
+            extension: ""
+          - os: windows
+            arch: amd64
+            extension: ".exe"
+          - os: windows
+            arch: arm64
+            extension: ".exe"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.22'
+      - name: Build binaries
+        run: |
+          make build OS=${{ matrix.os }} ARCH=${{ matrix.arch }}
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: bin
+          asset_name: |
+            beanstalk-cli.${{ matrix.os }}.${{ matrix.arch }}${{ matrix.extension }}
+          asset_content_type: application/octet-stream
