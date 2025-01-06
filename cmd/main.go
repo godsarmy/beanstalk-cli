@@ -18,6 +18,7 @@ var (
 	app     = kingpin.New("beanstalk-cli", "A beanstalkd client CLI application.")
 	debug   = app.Flag("debug", "Enable debug mode.").Short('d').Bool()
 	address = app.Flag("address", "Connect address. schema: tcp | unix").
+		Envar("BS_ADDRESS").
 		Short('a').
 		Default("tcp://127.0.0.1:11300").
 		String()

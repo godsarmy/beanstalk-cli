@@ -22,28 +22,37 @@ beanstalk-cli: A Powerful Command-Line Interface for [beanstalkd](https://github
 ## Example
 
  * Put a job
-```
+```sh
 $ beanstalk put -a tcp://127.0.0.1:11300 foobar
 id:	2
 ```
  * Reserve a job
-```
+```sh
 $ beanstalk reserve -a tcp://127.0.0.1:11300
 id:  	1
 body:	2222
 ```
  * Bury a job
-```
+```sh
 $ beanstalk-cli bury -a tcp://127.0.0.1:11300 2
 id:  	2
 body:	foobar
 ```
  * Delete a job
-```
+```sh
 $ beanstalk-cli delete -a tcp://127.0.0.1:11300 2
 ```
+ * Show server stats
+ ```sh
+$ beanstalk-cli stats tcp://127.0.0.1:11300
+ ```
+ * Connect to a server with address defined in environment variable
+ ```sh
+$ export BS_ADDRESS=tcp://127.0.0.1:11300
+$ beanstalk-cli stats-tube default
+ ```
  * Connect to a server listening on unix socket
-```
+```sh
 $ beanstalkd -l unix:///tmp/beanstalkd.sock &
 $ beanstalk-cli stats -a unix:///tmp/beanstalkd.sock
 ```
