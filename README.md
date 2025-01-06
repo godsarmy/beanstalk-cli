@@ -1,7 +1,7 @@
 <p align="center">
-    <a href="https://github.com/godsarmy/beanstalk-cli/releases"><img src="https://img.shields.io/github/downloads/xuri/aurora/total.svg" alt="Downloads"></a>
+    <a href="https://github.com/godsarmy/beanstalk-cli/releases"><img src="https://img.shields.io/github/downloads/godsarmy/beanstalk-cli/total.svg" alt="Downloads"></a>
     <a href="https://github.com/godsarmy/beanstalk-cli/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="Licenses"></a>
-    <a href="https://github.com/godsarmy/beanstalk-cli/releases"><img src="https://img.shields.io/github/release/xuri/aurora.svg?label=Release" alt="Release"></a>
+    <a href="https://github.com/godsarmy/beanstalk-cli/releases"><img src="https://img.shields.io/github/release/godsarmy/beanstalk-cli.svg?label=Release" alt="Release"></a>
 </p>
 
 ## Overview
