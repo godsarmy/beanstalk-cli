@@ -12,6 +12,7 @@ beanstalk-cli: A Powerful Command-Line Interface for [beanstalkd](https://github
 
 `beanstalk-cli` provides a comprehensive set of commands for managing your Beanstalkd queues directly from your terminal.  This makes it ideal for scripting, automation, debugging, and integrating with your CI/CD pipelines.
 
+ * **Cross-platform support:** macOS/Linux/Windows 32/64-bit
  * **Full Beanstalkd Protocol Support:** Implement every command of the [beanstalkd protocol](https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt), giving you complete control over your queues.
  * **TCP and Unix Socket Connections:** Connect to Beanstalkd servers using either TCP or Unix sockets, providing flexibility for different deployment environments.
  * **JSON Output:** Format output as [JSON](https://json.org/) for easy parsing and integration with other tools and scripts, enabling powerful automation workflows.
